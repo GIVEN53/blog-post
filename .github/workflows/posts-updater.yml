@@ -1,0 +1,40 @@
+name : Posts Updater
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "0 0 */1 * *" # every 1 day
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install feedparser
+        pip3 install markdownify
+        pip3 install pygments
+
+    - name: Update posts
+      run: |
+        python3 posts-update-automation.py
+
+    - name: Commit and push when there are changes
+      run: |
+        git add .
+        if [ -n "$(git status --porcelain)" ]; then
+          git config --local user.email "${{ secrets.EMAIL }}"
+          git config --local user.name "Nam Gi Beom"
+          git commit -m "Update posts via workflow-${{ github.run_number }}"
+          git push
+        fi
