@@ -11,8 +11,6 @@ def post(feeds: list):
         content = create_content(title, feed["summary"])
 
         file_name = get_file_name(category, title)
-        if os.path.exists(file_name):
-            continue
         f = open(file_name, mode="w", encoding="utf-8")
         f.write(content)
         f.close()
