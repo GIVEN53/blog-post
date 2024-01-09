@@ -1,6 +1,10 @@
 import feedparser
 import os
 from markdownify import markdownify
+import re
+
+BLOG_URI = "https://given-dev.tistory.com/"
+GITHUB_URI = "https://github.com/GIVEN53/blog-post/tree/main/"
 
 
 def update(feeds: list):
@@ -16,8 +20,21 @@ def update(feeds: list):
 
 
 def create_content(title: str, summary: str) -> str:
-    markdown_summary = markdownify(summary)
-    return f"{title}\n=\n{markdown_summary}"
+    contents = summary.split("<pre>")
+
+    for i in range(len(contents)):
+        code_block = re.search(r'<code\s+class="([^"]+)"', contents[i])
+        if code_block:
+            language = code_block.group(1)
+            contents[i] = attach_language(language, "<pre>" + contents[i])
+        else:
+            contents[i] = markdownify(contents[i])
+    return f"{title}\n=\n" + "".join(contents)
+
+
+def attach_language(language: str, content: str) -> str:
+    content = markdownify(content).split("```")
+    return "\n```" + language + content[1] + "```\n" + "".join(content[2:])
 
 
 def get_file_name(category: str, title: str) -> str:
@@ -32,12 +49,9 @@ def update_readme(category: str):
 
     if readme.find(category) == -1:
         with open("README.md", "a", encoding="utf-8") as f:
-            f.write(
-                f"- [{category}](https://github.com/GIVEN53/blog-post/tree/main/{category})\n"
-            )
+            f.write(f"- [{category}]({GITHUB_URI + category})\n")
 
 
 if __name__ == "__main__":
-    tistory_blog_uri = "https://given-dev.tistory.com"
-    feeds = feedparser.parse(tistory_blog_uri + "/rss")
+    feeds = feedparser.parse(BLOG_URI + "rss")
     update(feeds["entries"])
