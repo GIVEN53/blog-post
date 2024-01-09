@@ -17,7 +17,7 @@
 
 
 
-``` Python
+```python
 from sys import stdin
 
 def is_prime(num) :

@@ -17,7 +17,7 @@
 
 
 
-``` Python
+```python
 from sys import stdin
 from math import sqrt
 
@@ -38,6 +38,7 @@ while True :
   print(primes.count(True))
 ```
 
+
 * (1) 제곱근을 기준으로 곱의 대칭이 이루어지므로 제곱근까지만 순회한다.
 * (2) `i`에 2부터 곱하면서 False 처리한다.
 
@@ -47,7 +48,7 @@ while True :
 
 
 
-``` Python
+```python
 from sys import stdin
 
 def get_prime(num):
@@ -67,5 +68,6 @@ while True :
   primes = arr[n + 1 : 2 * n + 1]
   print(primes.count(True))
 ```
+
 
 * (1) `i * 2`부터 `i` 간격으로 False 처리한다. `i`를 제외한 모든 배수를 선택하므로 `num // i - 1` 개수를 선택한다.
