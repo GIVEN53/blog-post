@@ -1,7 +1,7 @@
 import feedparser
 import os
-from markdownify import markdownify
 import re
+from markdownify import markdownify
 
 BLOG_URI = "https://given-dev.tistory.com/"
 GITHUB_URI = "https://github.com/GIVEN53/blog-post/tree/main/"
@@ -26,6 +26,8 @@ def create_content(title: str, summary: str) -> str:
         code_block = re.search(r'<code\s+class="([^"]+)"', contents[i])
         if code_block:
             language = code_block.group(1)
+            if "language-" in language:
+                language = language.replace("language-", "")
             contents[i] = attach_language(language, "<pre>" + contents[i])
         else:
             contents[i] = markdownify(contents[i])
