@@ -21,7 +21,7 @@
 
 
 
-```language-java
+```java
 class Solution {
     public int solution(String[] board) {
         int[] o = new int[8]; // (1)
