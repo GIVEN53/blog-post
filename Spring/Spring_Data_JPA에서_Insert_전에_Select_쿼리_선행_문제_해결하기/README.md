@@ -1,6 +1,7 @@
 Spring Data JPA에서 Insert 전에 Select 쿼리 선행 문제 해결하기
 =
-Entity를 저장할 때 insert 쿼리가 실행되기 전에 select 쿼리가 선행하는 이슈가 있었다.
+배경
+--
 
 
 
@@ -30,7 +31,9 @@ public class User extends BaseEntity {
 ```
 
 
-User 클래스이고 `@Id`는 OAuth 서버에서 전달받은 key를 PK로 할당하고 있기 때문에 `@GeneratedValue` 어노테이션은 사용하지 않았다.
+User 엔티티의 `@Id`는 OAuth 서버에서 전달받은 key를 PK로 할당하고 있기 때문에 `@GeneratedValue` 어노테이션은 사용하지 않았다.  
+  
+
 
 
 
@@ -90,102 +93,75 @@ TRACE 17218 --- [           main] o.s.t.i.TransactionInterceptor           : Com
 ```
 
 
-User 객체를 저장하면 select 후 insert가 실행되는 것을 볼 수 있다.  
+User 객체를 저장하면 select 후 insert가 실행된다.  
 `save()`를 호출할수록 불필요한 select 쿼리가 기하급수적으로 늘어날 것이고 결국 데이터베이스의 성능을 저하시키기 때문에 최적화가 필요하다고 판단했다.  
-이 문제를 해결하기 위해 먼저 Spring Data JPA의 `save()`가 어떻게 동작하는지 알아보자.
+  
 
 
-1. save() 동작 방식
----------------
+
+save()는 어떻게 동작할까?
+-----------------
 
 
-### 1.1. SimpleJpaRepository
+원인을 파악하기 위해 `save()`의 동작 방식을 살펴보았다.  
+`save()` 메서드는 JpaRepository의 구현체인 **SimpleJpaRepository** 클래스에 구현되어 있다. 
 
 
-![](https://blog.kakaocdn.net/dn/bRNH5F/btsExJydjWb/F1c1PeZ8k7M7Qk2KI3VRck/img.png)
+### SimpleJpaRepository
 
 
-![](https://blog.kakaocdn.net/dn/bdNnux/btsExSojxaw/9KkoI7YtdId0qZUME7G2Z1/img.png)
+![](https://blog.kakaocdn.net/dn/dUAPCF/btsEGS2wkGh/370kGyTYDB5P4Wm3yIa0qk/img.png)
 
 
-`save()` 메서드는 JpaRepository의 구현체인 SimpleJpaRepository 클래스에 구현되어 있다.  
 주입된 **JpaEntityInformation**의 `isNew()`를 호출해서 전달받은 객체가 new 상태라면 영속화(`persist()`)하고, 관리 중인 상태라면 병합(`merge()`)한다.
 
 
 ![](https://blog.kakaocdn.net/dn/IeHn9/btsExIssyhJ/KYkNsJhyNswXr2v6KGNO50/img.png)
 
 
-JpaEntityInformation 인터페이스의 다이어그램이며, 표시한 두 클래스의 `isNew()` 메서드가 동작한다.
+JpaEntityInformation 인터페이스의 다이어그램이며, JpaMetamodelEntityInformation과 AbstractEntityInformation의 `isNew()` 메서드가 동작한다.
 
 
-### 1.2. JpaMetamodelEntityInformation
+### JpaMetamodelEntityInformation
 
 
 ![](https://blog.kakaocdn.net/dn/7Lc9c/btsEtsYyJk4/m5ktcN4xRWEZOyBRFS0VIk/img.png)
 
 
-Entity에서 `@Version` 어노테이션을 사용한 필드를 확인한다.
+**JpaMetamodelEntityInformation**는 `@Version` 어노테이션을 사용한 필드를 확인한다.
 
 
-* 관련 필드가 없거나 `@Version`이 사용된 필드가 primitive 타입이면 부모의 `isNew()`를 호출한다.
+* 관련 필드가 없거나 `@Version`이 사용된 필드가 primitive 타입이면 AbstractEntityInformation의 `isNew()`를 호출한다.
 * `@Version`이 사용된 필드가 wrapper class이면 null인지 확인한다.
 
 
-### 1.3. AbstractEntityInformation
+### AbstractEntityInformation
 
 
 ![](https://blog.kakaocdn.net/dn/bJME5e/btsEtmRKv6W/T1tMZhUEo8TiLJqa9Bevm0/img.png)
 
 
-Entity에서 `@Id` 어노테이션을 사용한 필드 값을 확인한다.
+**AbstractEntityInformation**는 `@Id` 어노테이션을 사용한 필드를 확인한다.
 
 
 * primitive 타입이 아니라면 null인지 확인한다.
 * Number의 하위 타입이면 0인지 확인한다.
 
 
-### 원인
+### **원인**
 
 
-`@GeneratedValue` 어노테이션으로 auto increment를 사용하면 데이터베이스에 저장될 때 id가 할당된다. 데이터베이스에 저장되기 전에 메모리에서 생성된 객체는 id가 비어있기 때문에 `isNew()`는 true가 된다. 그러나 `@Id` 필드에 값을 할당한 상태에서 객체를 저장할 경우 `isNew()`는 false가 되어 `em.merge()`를 호출한다.
+`@GeneratedValue` 어노테이션으로 auto increment를 사용하면 데이터베이스에 저장될 때 id가 할당된다. 데이터베이스에 저장되기 전에 메모리에서 생성된 객체는 id가 비어있기 때문에 `isNew()`는 true이다. 그러나 `@Id` 필드에 값을 할당한 상태에서 객체를 저장할 경우 `isNew()`는 false이기 때문에 `em.merge()`를 호출하게 된다.
 
 
-`merge()`는 준영속 상태(Detached)의 Entity를 영속 상태(Managed)로 만들기 위해 **식별자 값으로 조회하고, 조회된 객체에 병합하거나 조회된 객체가 없으면 새로 생성해서 병합**한다.  
-따라서 select로 객체를 조회하고, 조회된 객체가 없으므로 insert를 실행하게 된다.
-
-
-2. 해결 방법
---------
-
-
-### 2.1. Entity에서 Persistable<T> 인터페이스 구현
-
-
-![](https://blog.kakaocdn.net/dn/kWsrX/btsEwIzwTdP/OkTXKH3h5PKRDC6AJCsHMK/img.png)
-
-
-![](https://blog.kakaocdn.net/dn/cdzAT8/btsEy6sDyKc/vXF7KU0dB2mezNm8WUyXxk/img.png)
-
-
-SimpleJpaRepository의 JpaEntityInformation를 **JpaPersistableEntityInformation**으로 주입해야 한다.  
-그러기 위해서는 Entity에서 `Persistable<T>` 인터페이스를 구현한다.
+`merge()`는 준영속 상태(Detached)의 엔티티를 영속 상태(Managed)로 만들기 위해 **식별자 값으로 조회하고, 조회된 객체에 병합하거나 조회된 객체가 없으면 새로 생성해서 병합**한다.  
+따라서 select로 객체를 조회하고, 조회된 객체가 없으므로 insert를 실행하게 된다.  
+  
 
 
 
-```java
-@Getter
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-public class BaseEntity {
-    @CreatedDate
-    @Column(name = "CREATED_AT", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "UPDATED_AT", nullable = false)
-    private LocalDateTime updatedAt;
-}
-```
+해결 방법1: 엔티티에서 Persistable<T> 인터페이스 구현
+-------------------------------------
 
 
 
@@ -225,61 +201,89 @@ public class User extends BaseEntity implements Persistable<String> {
 ```
 
 
-`getId()`와 `isNew()` 두 메서드를 오버라이딩한다. `getId()`는 `@Id` 어노테이션의 필드, `isNew()`는 새로운 Entity인지 여부를 리턴하도록 설정한다. JPA의 auditing을 사용하면 쉽게 적용할 수 있다.
+`getId()`는 `@Id` 어노테이션의 필드, `isNew()`는 새로운 엔티티인지 여부를 리턴하도록 오버라이딩한다.
 
 
-구현이 완료되면 JpaRepositoryFactory에서 SimpleJpaRepository bean을 생성할 때 JpaPersistableEntityInformation이 주입된다.  
-![](https://blog.kakaocdn.net/dn/36V3M/btsEqXY5UyY/jIk1Z2ldx4SyCsnOOHY9WK/img.png)
+
+```java
+@Getter
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public class BaseEntity {
+    @CreatedDate
+    @Column(name = "CREATED_AT", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "UPDATED_AT", nullable = false)
+    private LocalDateTime updatedAt;
+}
+```
 
 
-![](https://blog.kakaocdn.net/dn/PKyjF/btsEyPreNCq/yNfx4XzJyWrT4Jy4cQjWHK/img.png)
+JPA의 auditing을 사용하면 `isNew()`를 쉽게 오버라이딩할 수 있다. 
 
 
-![](https://blog.kakaocdn.net/dn/bijD3H/btsEwIffwip/LBMkPgWfyK9n68WthgXlMK/img.png)
+### Persistable 인터페이스를 구현하는 이유
 
 
-#### 2.1.1. getTargetRepository()
+![](https://blog.kakaocdn.net/dn/kWsrX/btsEwIzwTdP/OkTXKH3h5PKRDC6AJCsHMK/img.png)  
+![](https://blog.kakaocdn.net/dn/cdzAT8/btsEy6sDyKc/vXF7KU0dB2mezNm8WUyXxk/img.png)
+
+
+엔티티에서 `Persistable<T>` 인터페이스를 구현하면 SimpleJpaRepository의 JpaEntityInformation를 **JpaPersistableEntityInformation**으로 주입하게 된다.
+
+
+### JpaPersistableEntityInformation 주입 과정
+
+
+SimpleJpaRepository bean은 JpaRepositoryFactory에서 생성된다.
+
+
+![](https://blog.kakaocdn.net/dn/slfDq/btsEFN8uane/78MM2wT7eCqY3p7URKQKdk/img.png)
+
+
+#### 1. getTargetRepository()
 
 
 JPA repository 객체를 생성한다.
 
 
-#### 2.1.2. getEntityInformation()
+#### 2. getEntityInformation()
 
 
 `information.getDomainType()`에서 리턴한 User 클래스를 파라미터로 받는다.  
-![](https://blog.kakaocdn.net/dn/DGVfI/btsEvuBz6MI/RC1oZJ8RFwHAmJZIHk4kpk/img.png)
-
-
-![](https://blog.kakaocdn.net/dn/bjOW5l/btsEvfxE5xt/T72I01raQa67MfQNJLuFD0/img.png)
+![](https://blog.kakaocdn.net/dn/RqkZE/btsEFdl3VBz/5B6wVhOHzs6hdx6rqtSdb1/img.png)
 
 
 ![](https://blog.kakaocdn.net/dn/5kXpx/btsEqV713sI/BAVDvwXlkoR9WTYHYhLUtk/img.png)
 
 
-#### 2.1.3. JpaEntityInformationSupport.getEntityInformation()
+#### 3. JpaEntityInformationSupport.getEntityInformation()
 
 
-![](https://blog.kakaocdn.net/dn/esdcdO/btsEy1kDKee/5Hu2G9dKn9e4Nifk5snMk0/img.png)
-
-
-![](https://blog.kakaocdn.net/dn/bInIEA/btsEwIGmYzO/nU0O0zk9F5IKVgKkbO501K/img.png)
+![](https://blog.kakaocdn.net/dn/dm62VN/btsEEXjxe5Z/K9z30VM8EXVMi7bdhDDssK/img.png)
 
 
 User 클래스는 Persistable의 구현체이기 때문에 **JpaPersistableEntityInformation**을 리턴한다.
 
 
-#### 2.1.4. repository 리턴
+#### 4. repository 리턴
 
 
-JpaPersistableEntityInformation이 주입된 SimpleJpaRepository를 리턴한다.  
-SimpleJpaRepository에서 `save()`를 호출하면 `isNew()`는 Entity에서 오버라이팅한 `isNew()`가 실행된다.
+JpaPersistableEntityInformation이 주입된 SimpleJpaRepository를 리턴한다. 
+
+
+SimpleJpaRepository에서 `save()`를 호출하면 `isNew()`는 엔티티에서 오버라이딩한 `isNew()`가 실행된다.
 
 
 ![](https://blog.kakaocdn.net/dn/bufCDZ/btsEydy6ynb/fvTT2T0x6Uu69DRLIUKQ1k/img.png)
 
 
-### 2.2. @PrePersist, @PostLoad 어노테이션 사용
+  
+
+해결 방법2: @PrePersist, @PostLoad 어노테이션 사용
+---------------------------------------
 
 
 
@@ -315,13 +319,13 @@ public class User implements Persistable<String> {
 ```
 
 
-**Persistable를 구현할 때 새로운 Entity인지 판단할 필드가 없을 경우** boolean 필드와 `@PrePersist`, `@PostLoad` 어노테이션으로 해결할 수 있다.
+**Persistable를 구현할 때 새로운 엔티티인지 판단할 필드가 없을 경우** boolean 필드와 `@PrePersist`, `@PostLoad` 어노테이션으로 해결할 수 있다.
 
 
 
 > `@Transient`: 테이블의 컬럼과 매핑이 제외된다.  
-> `@PrePersist`: Entity가 비영속 상태(New)에서 영속 상태(Managed)가 되기 전에 실행한다.  
-> `@PostLoad`: Entity가 영속성 컨텍스트에 조회된 후에 또는 refresh를 호출한 후에 실행한다.
+> `@PrePersist`: 엔티티가 비영속 상태(New)에서 영속 상태(Managed)가 되기 전에 실행한다.  
+> `@PostLoad`: 엔티티가 영속성 컨텍스트에 조회된 후에 또는 refresh를 호출한 후에 실행한다.
 > 
 > 
 > 
@@ -330,10 +334,10 @@ public class User implements Persistable<String> {
 
 객체가 생성됐을 때 boolean 필드를 true로 할당해서 `em.persist()`가 실행되도록 한다.  
 flush가 되기 전에 같은 트랜잭션에서 해당 객체를 다시 조회 후 변경하는 경우가 발생할 수 있기 때문에 `@PrePersist` 어노테이션을 사용한다.  
-다른 트랜잭션에서 Entity를 조회할 때 새로운 Entity로 판단하지 않도록 `@PostLoad` 어노테이션을 사용한다.
+다른 트랜잭션에서 엔티티를 조회할 때 새로운 엔티티로 판단하지 않도록 `@PostLoad` 어노테이션을 사용한다.
 
 
-### 2.3. 결과
+### 결과
 
 
 
@@ -348,7 +352,7 @@ flush가 되기 전에 같은 트랜잭션에서 해당 객체를 다시 조회 
 ```
 
 
-select 쿼리 선행없이 insert 쿼리 하나만 발생한다.
+select 쿼리 선행없이 insert 쿼리 하나만 발생하는 것을 확인할 수 있다.
 
 
 Reference
