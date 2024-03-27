@@ -285,22 +285,12 @@ Spring은 트랜잭션 시작 시점에(쿼리를 실행하기 전에) Data Sour
 
 
 > TransactionManager 식별 -> Data Source에서 Connection 획득 -> 트랜잭션 동기화
-> 
-> 
-> 
-> 
-> 
 
 따라서 `LazyConnectionDataSourceProxy` 객체를 사용해서 쿼리를 실행할 때 Connection을 가져올 수 있도록 구현해야 한다.
 
 
 
 > TransactionManager 식별 -> Connection Proxy 객체 획득 -> 트랜잭션 동기화 -> 실제 쿼리 호출 시 getConnection() -> determineCurrentLookupKey() 호출
-> 
-> 
-> 
-> 
-> 
 
 ### 3.3. entityManagerFactory()
 

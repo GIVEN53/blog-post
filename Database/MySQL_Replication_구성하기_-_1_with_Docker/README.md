@@ -154,11 +154,6 @@ fi
 > Shell Script 조건식 연산자  
 > `-d`: 디렉토리면 true  
 > `-z`: 문자열이 null or 길이가 0이면 true
-> 
-> 
-> 
-> 
-> 
 
 3. Master 설정
 ------------
@@ -219,11 +214,6 @@ RUN mkdir /var/log/mysql && touch /var/log/mysql/error.log && chmod -R 777 /var/
 > 2. /etc/mysql/my.cnf
 > 3. /usr/local/etc/my.cnf
 > 4. ~/my.cnf
-> 
-> 
-> 
-> 
-> 
 
 ### 3.3. entrypoint
 
@@ -288,11 +278,6 @@ log_error=/var/log/mysql/error.log
 
 
 > server-id는 Binary Log에 쌓이는 이벤트들이 어떤 서버에서 발생한 이벤트인지 식별하기 위해 사용된다. Master와 값이 동일할 경우 Master에서 발생한 이벤트여도 Slave에서 발생한 이벤트로 보고 동기화를 진행하지 않는다. 따라서 replication 구성에 포함된 서버들은 각자 고유한 server-id를 갖도록 설정해야 한다.
-> 
-> 
-> 
-> 
-> 
 
 ### 4.2. Dockerfile
 
@@ -414,11 +399,6 @@ Authentication plugin 'caching_sha2_password' reported error: Authentication req
 
 - (6) Master에 접속해서 데이터베이스를 생성한다.
 > Master에 데이터베이스를 먼저 생성하고 replication을 설정하면 position이 데이터베이스 생성 후의 위치로 저장되기 때문에 Slave에 데이터베이스가 생성되지 않는다.
-> 
-> 
-> 
-> 
->
 
 
 5. 결과

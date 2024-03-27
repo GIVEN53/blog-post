@@ -326,11 +326,6 @@ public class User implements Persistable<String> {
 > `@Transient`: 테이블의 컬럼과 매핑이 제외된다.  
 > `@PrePersist`: 엔티티가 비영속 상태(New)에서 영속 상태(Managed)가 되기 전에 실행한다.  
 > `@PostLoad`: 엔티티가 영속성 컨텍스트에 조회된 후에 또는 refresh를 호출한 후에 실행한다.
-> 
-> 
-> 
-> 
-> 
 
 객체가 생성됐을 때 boolean 필드를 true로 할당해서 `em.persist()`가 실행되도록 한다.  
 flush가 되기 전에 같은 트랜잭션에서 해당 객체를 다시 조회 후 변경하는 경우가 발생할 수 있기 때문에 `@PrePersist` 어노테이션을 사용한다.  

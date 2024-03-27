@@ -42,11 +42,6 @@ Master에 commit된 내용이 Slave에 정상적으로 복제되었는지 확인
 
 
 > Client Commit -> Binlog Flush/Commit -> **Engine Commit** -> **Client Commit OK Response** -> **Binlog dump Send Event without ACK Request** -> Record Relay Log
-> 
-> 
-> 
-> 
-> 
 
 #### 장점
 
@@ -108,11 +103,6 @@ STOP REPLICA SQL_THREAD;
 
 
 > Master에서는 여러 쓰레드로부터 변경이 발생하지만 Slave에서는 하나의 SQL Thread가 DB 반영 작업을 수행하기 때문에 병목이 발생할 수 있다. 이를 해결하기 위해 MySQL 5.6부터 `DATABASE` 기반의 MTS(Multi Threaded Slave 또는 MTR: Multi Threaded Replication)기능이 추가됐으며, MySQL 5.7에서는 5.6 버전의 단점을 개선하여 `LOGICAL_CLOCK` 기반으로 병렬 복제할 수 있게 되었다.
-> 
-> 
-> 
-> 
-> 
 
 Slave에서 `log-slave-updates` 파라미터를 활성화하면 SQL Thread에서 수행되는 이벤트를 자신의 Binary Log에도 기록할 수 있다. [MySQL Documentation](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_log_replica_updates)  
 예를 들어 `A -> B -> C`의 replication을 구성할 경우 B는 A의 Slave이면서 C의 Master 역할을 수행함으로써 **Chained Replication**을 적용할 수 있다.
@@ -162,11 +152,6 @@ MySQL 5.5에서 추가되었고, Master의 Engine Commit이 수행된 후에 Sla
 
 
 > Client Commit -> Binlog Flush/Commit -> **Engine Commit** -> **Binlog dump Send Event with ACK Request** -> **Record Relay Log** -> **ACK** -> **Client Commit OK Response**
-> 
-> 
-> 
-> 
-> 
 
 Master에서 commit 후 Binary Log를 전송하기 전에 Master에서 crash 또는 Slave에서 Relay Log를 기록하기 전에 Slave에서 crash 되면 데이터의 정합성을 보장하기 어려운 단점이 있다.
 
@@ -183,11 +168,6 @@ Slave의 Relay Log에 이벤트가 기록되고 ACK를 회신한 후에 Master�
 
 
 > Client Commit -> Binlog Flush/Commit -> **Binlog dump Send Event with ACK Request** -> **Record Relay Log** -> **ACK** -> **Engine Commit** -> **Client Commit OK Response**
-> 
-> 
-> 
-> 
-> 
 
 Slave의 Engine Commit을 보장하지 않지만 Relay Log를 정상적으로 기록했다는 것은 보장할 수 있다. 그리고 After Commit 방식과는 달리 ACK를 회신하지 않으면 Master에서 commit을 수행하지 않기 때문에 crash가 발생해도 정합성을 유지할 수 있다.  
 여러 Slave 중 하나의 Slave만 ACK를 회신하면 Master는 해당 트랜잭션을 완료하기 때문에 최소한의 데이터 정합성을 확보하면서 특정 Slave에서 지연이 발생해도 ACK를 빠르게 회신하는 Slave가 하나라도 있으면 Master의 쓰기 지연 시간은 줄어든다.
@@ -228,11 +208,6 @@ SET SESSION binlog_format = 'STATEMENT' | 'ROW' | 'MIXED';
 
 
 > [Unsafe Statements](https://dev.mysql.com/doc/refman/8.0/en/replication-rbr-safe-unsafe.html)은 쿼리의 결과가 항상 동일하지 않은 동작을 의미하며 이를 복제할 때 문제가 발생할 수 있다. 예를 들어 서버의 현재 시간을 포함한 INSERT 쿼리를 slave에서 실행하면 master와 저장된 값이 달리지기 때문이다. 이처럼 올바르게 복제할 수 없을 경우 `[Warning] Statement is not safe to log in statement format.`와 같은 경고가 표시된다.
-> 
-> 
-> 
-> 
-> 
 
 ### 2.2. RBR(Row Based Replication)
 
