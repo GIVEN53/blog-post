@@ -2,6 +2,7 @@ import feedparser
 import os
 import re
 from markdownify import markdownify
+import html
 
 BLOG_URI = "https://given-dev.tistory.com/"
 GITHUB_URI = "https://github.com/GIVEN53/blog-post/tree/main/"
@@ -20,6 +21,7 @@ def update(feeds: list):
 
 
 def create_content(title: str, summary: str) -> str:
+    summary = html.unescape(summary)
     contents = summary.split("<pre>")
 
     for i in range(len(contents)):
