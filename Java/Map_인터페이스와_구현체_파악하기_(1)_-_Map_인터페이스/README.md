@@ -329,9 +329,37 @@ System.out.println(map); // {1=hello world!}
 ```
 
 
+구현체 다이어그램
+---------
+
+
+
+### Non-Thread Safe
+
+
+![](https://blog.kakaocdn.net/dn/JdGU7/btsGAfJGVpT/CzcZUDcUvkkBfUQAX3nZ4K/img.png)
+
+
+
+### Thread Safe
+
+
+![](https://blog.kakaocdn.net/dn/o5icW/btsGBxP4kss/mwEFxhKwTBygpb5Ej8MMqk/img.png)
+
+
+
+### Collections Inner Class
+
+
+![](https://blog.kakaocdn.net/dn/dopUuT/btsGCtTIPur/YCwn45KnGInH0dEaVeamu1/img.png)
+
+
+
 Reference
 ---------
 
 
 <https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html>
+
+
 
