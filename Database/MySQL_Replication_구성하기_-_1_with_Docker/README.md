@@ -3,8 +3,8 @@ MySQL Replication 구성하기 - 1 with Docker
 과거에 진행했던 코인 모의투자 프로젝트에서 겪었던 문제와 Replication을 구성한 내용을 작성해보려고 한다.
 
 
-1. 배경
------
+1\. 배경
+------
 
 
 맡았던 도메인은 사용자의 매수, 매도 주문이었고 기능 중 하나는 주문이 체결될 때마다 거래 내역을 생성해서 데이터베이스에 저장하는 것이었다. 코인의 거래량 자체가 적거나 실시간으로 거래량이 치솟아도 사용자가 걸어둔 미체결 주문량이 적으면 문제가 없었지만, 반대의 경우 거래 내역을 조회할 때 레이턴시가 길어지는 문제가 발생했다. 단주매매처럼 트래픽이 급격하게 증가하면 3초가 넘기도 했다.  
@@ -14,23 +14,23 @@ insert 트랜잭션이 커넥션을 많이 점유해서 병목이 생긴 것은 
 [MySQL Replication 구조](https://given-dev.tistory.com/112)에서 replication에 대한 내용을 확인할 수 있다.
 
 
-### 1.1. version
+### 1\.1\. version
 
 
-* MySQL 8.0.32
-* Docker 23.0.1
-* Ubuntu 22.04.2
+* MySQL 8\.0\.32
+* Docker 23\.0\.1
+* Ubuntu 22\.04\.2
 
 
-### 1.2. 디렉토리 구조
+### 1\.2\. 디렉토리 구조
 
 
 ![](https://blog.kakaocdn.net/dn/brIIaC/btsEcrZA4RV/x8KEMCO2tT8gPbV47cruV0/img.png)
 
 
 
-2. docker-compose
------------------
+2\. docker\-compose
+-------------------
 
 
 Master에 데이터가 존재하면 `mysqldump`를 사용해서 Slave와 싱크를 맞춘 후에 replication을 설정해야 한다. 개발 환경에서 진행했기 때문에 데이터 덤프를 건너뛰고 docker와 쉘 스크립트를 이용해서 replication 설정을 자동화하는 것에 초점을 두었다.
@@ -104,7 +104,7 @@ networks:
 * **networks**: 컨테이너에서 사용할 ip를 설정한다.
 
 
-### 2.1. docker-entrypoint-initdb.d
+### 2\.1\. docker\-entrypoint\-initdb.d
 
 
 ![](https://blog.kakaocdn.net/dn/cZNsVu/btsEfm5jiQ1/6sxW6WBmiaT9GMY6ZHYUx0/img.png)
@@ -157,11 +157,11 @@ fi
 > `-d`: 디렉토리면 true  
 > `-z`: 문자열이 null or 길이가 0이면 true
 
-3. Master 설정
-------------
+3\. Master 설정
+-------------
 
 
-### 3.1. my.cnf
+### 3\.1\. my.cnf
 
 
 
@@ -177,8 +177,8 @@ log_error=/var/log/mysql/error.log
 ```
 
 
-* **server-id**: MySQL 서버가 각자 갖고 있는 고유한 식별 값이다. Slave의 server-id와 달라야 한다.
-* **log-bin**: Binary Log의 파일명이다. 절대 경로를 추가해서 다른 디렉토리를 지정할 수 있다.
+* **server\-id**: MySQL 서버가 각자 갖고 있는 고유한 식별 값이다. Slave의 server\-id와 달라야 한다.
+* **log\-bin**: Binary Log의 파일명이다. 절대 경로를 추가해서 다른 디렉토리를 지정할 수 있다.
 * **expire\_logs\_days**: Binary Log의 보관 주기를 설정한다.
 * **binlog\_cache\_size**: Binary Log의 변경 이벤트를 보관할 메모리 버퍼 사이즈를 설정한다.
 * **max\_binlog\_size**: Binary Log의 최대 사이즈를 설정한다.
@@ -189,7 +189,7 @@ log_error=/var/log/mysql/error.log
 추가적으로 필요한 파라미터가 있으면 [MySQL Documentation](https://dev.mysql.com/doc/refman/8.0/en/replication-options.html)에서 확인할 수 있다.
 
 
-### 3.2. Dockerfile
+### 3\.2\. Dockerfile
 
 
 
@@ -215,9 +215,9 @@ RUN mkdir /var/log/mysql && touch /var/log/mysql/error.log && chmod -R 777 /var/
 > 1. /etc/my.cnf
 > 2. /etc/mysql/my.cnf
 > 3. /usr/local/etc/my.cnf
-> 4. ~/my.cnf
+> 4. \~/my.cnf
 
-### 3.3. entrypoint
+### 3\.3\. entrypoint
 
 
 `./mysql/master/scripts/`경로에 생성한 스크립트 파일이다. 컨테이너의 `/docker-entrypoint-initdb.d` 경로로 마운트되고 컨테이너가 최초 생성될 때 스크립트를 실행한다.
@@ -243,16 +243,16 @@ mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES"
 ```
 
 
-* (1) 쉘 스크립트에서 에러가 발생하면 즉시 스크립트를 종료한다.
-* (2) MySQL 서버가 완전히 실행되기 전에 script가 먼저 실행되기 때문에 에러가 발생한다. 따라서 서버가 정상 실행될 때까지 ping 명령어로 확인하면서 기다린다.
-* (3) replication 권한이 부여된 사용자를 생성한다.
+* (1\) 쉘 스크립트에서 에러가 발생하면 즉시 스크립트를 종료한다.
+* (2\) MySQL 서버가 완전히 실행되기 전에 script가 먼저 실행되기 때문에 에러가 발생한다. 따라서 서버가 정상 실행될 때까지 ping 명령어로 확인하면서 기다린다.
+* (3\) replication 권한이 부여된 사용자를 생성한다.
 
 
-4. Slave 설정
------------
+4\. Slave 설정
+------------
 
 
-### 4.1. my.cnf
+### 4\.1\. my.cnf
 
 
 
@@ -271,17 +271,17 @@ log_error=/var/log/mysql/error.log
 ```
 
 
-* **server-id**: Master의 server-id와 다른 값을 사용한다.
+* **server\-id**: Master의 server\-id와 다른 값을 사용한다.
 * **relay\_log**: Relay Log의 경로이다.
 * **log\_replica\_updates**: Master로부터 전달받은 Binary Log를 Slave의 Binary Log에도 기록할지 여부를 설정하며 기본값은 ON이다.  
- MySQL 8.0.26 이전 릴리즈는 `log_slave_updates`을 사용하고 기본값은 OFF이다.
+ MySQL 8\.0\.26 이전 릴리즈는 `log_slave_updates`을 사용하고 기본값은 OFF이다.
 * **read\_only**: 읽기만 허용한다.
 
 
 
-> server-id는 Binary Log에 쌓이는 이벤트들이 어떤 서버에서 발생한 이벤트인지 식별하기 위해 사용된다. Master와 값이 동일할 경우 Master에서 발생한 이벤트여도 Slave에서 발생한 이벤트로 보고 동기화를 진행하지 않는다. 따라서 replication 구성에 포함된 서버들은 각자 고유한 server-id를 갖도록 설정해야 한다.
+> server\-id는 Binary Log에 쌓이는 이벤트들이 어떤 서버에서 발생한 이벤트인지 식별하기 위해 사용된다. Master와 값이 동일할 경우 Master에서 발생한 이벤트여도 Slave에서 발생한 이벤트로 보고 동기화를 진행하지 않는다. 따라서 replication 구성에 포함된 서버들은 각자 고유한 server\-id를 갖도록 설정해야 한다.
 
-### 4.2. Dockerfile
+### 4\.2\. Dockerfile
 
 
 
@@ -297,7 +297,7 @@ RUN mkdir /var/log/mysql && touch /var/log/mysql/error.log && chmod -R 777 /var/
 Master의 Dockerfile과 동일하다.
 
 
-### 4.3. entrypoint
+### 4\.3\. entrypoint
 
 
 `./mysql/slave/scripts/`경로에 있는 스크립트 파일이다. 컨테이너의 `/docker-entrypoint-initdb.d` 경로로 마운트되고 컨테이너가 최초 생성될 때 스크립트를 실행한다.
@@ -344,10 +344,10 @@ mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -h 172.28.0.2 -e "CREATE DATABASE ${MYS
 ```
 
 
-* (1) Slave에서 Master로 접근하기 때문에 Master가 완전히 실행될 때까지 기다린다.
-* (2) Slave의 사용자를 생성한다.
-* (3) Master에 접속해서 Binary Log 파일명을 변수에 저장한다.
-* (4) Master에 접속해서 Binary Log의 현재 위치를 변수에 저장한다.
+* (1\) Slave에서 Master로 접근하기 때문에 Master가 완전히 실행될 때까지 기다린다.
+* (2\) Slave의 사용자를 생성한다.
+* (3\) Master에 접속해서 Binary Log 파일명을 변수에 저장한다.
+* (4\) Master에 접속해서 Binary Log의 현재 위치를 변수에 저장한다.
 
 ```sql
 SHOW MASTER STATUS\G;
@@ -360,7 +360,7 @@ Slave에 Master 정보를 등록하려면 Master에서 위 명령어를 실행�
 
 
 
-- (5) Slave에서 Master의 정보를 입력하고 replication을 시작한다.
+- (5\) Slave에서 Master의 정보를 입력하고 replication을 시작한다.
 
 ```sql
 CHANGE MASTER TO
@@ -385,7 +385,7 @@ START REPLICA;
 ```
 
 
-MySQL 8.0부터 caching\_sha2\_password 플러그인이 기본값이다.  
+MySQL 8\.0부터 caching\_sha2\_password 플러그인이 기본값이다.  
 caching\_sha2\_password 플러그인으로 인증하는 사용자 계정을 사용할 때 Master와 SSL 기반의 보안 연결을 적용하지 않으면 아래와 같은 에러가 발생한다.
 
 
@@ -400,12 +400,12 @@ Authentication plugin 'caching_sha2_password' reported error: Authentication req
 
 
 
-- (6) Master에 접속해서 데이터베이스를 생성한다.
+- (6\) Master에 접속해서 데이터베이스를 생성한다.
 > Master에 데이터베이스를 먼저 생성하고 replication을 설정하면 position이 데이터베이스 생성 후의 위치로 저장되기 때문에 Slave에 데이터베이스가 생성되지 않는다.
 
 
-5. 결과
------
+5\. 결과
+------
 
 
 
@@ -434,7 +434,7 @@ Reference
 ---------
 
 
-<https://dev.mysql.com/doc/refman/8.0/en/replication-howto.html>  
-<https://dev.mysql.com/doc/refman/8.0/en/sql-replication-statements.html>  
-<https://huisam.tistory.com/entry/mysql-replication>
+[https://dev.mysql.com/doc/refman/8\.0/en/replication\-howto.html](https://dev.mysql.com/doc/refman/8.0/en/replication-howto.html)  
+[https://dev.mysql.com/doc/refman/8\.0/en/sql\-replication\-statements.html](https://dev.mysql.com/doc/refman/8.0/en/sql-replication-statements.html)  
+[https://huisam.tistory.com/entry/mysql\-replication](https://huisam.tistory.com/entry/mysql-replication)
 

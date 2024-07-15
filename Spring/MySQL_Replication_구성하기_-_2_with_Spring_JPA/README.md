@@ -1,6 +1,6 @@
 MySQL Replication 구성하기 - 2 with Spring JPA
 =
-[MySQL Replication 구성하기 - 1 with Docker](https://given-dev.tistory.com/113)에서 데이터베이스의 replication을 구성했다.  
+[MySQL Replication 구성하기 \- 1 with Docker](https://given-dev.tistory.com/113)에서 데이터베이스의 replication을 구성했다.  
 write는 Master, read는 Slave에서 처리하도록 쿼리를 분산하는 것은 애플리케이션 레벨에서 구현해야 한다.  
 일반적인 방법은 `@Transactional` 어노테이션의 `readOnly` 속성에 따라 분기하는 것이다.  
 ![](https://blog.kakaocdn.net/dn/KlGn4/btsEfohUDdr/21RsV1wL1r6kex9AwRqWL1/img.png)
@@ -10,12 +10,12 @@ write는 Master, read는 Slave에서 처리하도록 쿼리를 분산하는 것�
 ### version
 
 
-* Java 11.0.18
-* Spring 2.7.8
+* Java 11\.0\.18
+* Spring 2\.7\.8
 
 
-1. Data Source
---------------
+1\. Data Source
+---------------
 
 
 ![](https://blog.kakaocdn.net/dn/csOJN5/btsEft4A7x3/4aJAr85u8KhrcE7k2Y2700/img.png)
@@ -24,13 +24,13 @@ write는 Master, read는 Slave에서 처리하도록 쿼리를 분산하는 것�
 
 Data Source는 DB Connection과 관련된 인터페이스이며 데이터베이스의 연결 정보를 저장하고 Connection Pool에 Connection을 등록, 관리하는 역할을 한다.  
 JDBC는 Data Source 인터페이스를 통해 Connection을 획득, 반납하는 방식으로 데이터베이스와 통신하게 된다.  
-Data Source 인터페이스의 구현체는 여러 가지가 있으며 Spring Boot 2.0부터 `HikariCP`가 표준이다.
+Data Source 인터페이스의 구현체는 여러 가지가 있으며 Spring Boot 2\.0부터 `HikariCP`가 표준이다.
 
 
 Data Source가 한 개일 경우 auto configuration으로 Data Source가 자동으로 생성된다. 그러나 replication을 사용하면 2개 이상의 Data Source가 필요하기 때문에 개발자가 직접 생성해야 한다. 
 
 
-### 1.1. property 설정
+### 1\.1\. property 설정
 
 
 
@@ -71,10 +71,10 @@ Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException:
 ```
 
 
-MySQL 8.0부터 보안적인 이슈로 userSSL 옵션에 대한 추가적인 설정이 필요하다. MySQL의 SSL 접속을 끄기위해 `useSSL=false`를 기본적으로 세팅하게 되는데 `allowPublicKeyRetrieval=true`도 추가해주어야 한다.
+MySQL 8\.0부터 보안적인 이슈로 userSSL 옵션에 대한 추가적인 설정이 필요하다. MySQL의 SSL 접속을 끄기위해 `useSSL=false`를 기본적으로 세팅하게 되는데 `allowPublicKeyRetrieval=true`도 추가해주어야 한다.
 
 
-### 1.2. build.gradle
+### 1\.2\. build.gradle
 
 
 
@@ -90,7 +90,7 @@ dependencies {
 `@ConfigurationProperties` 어노테이션을 사용하기 위해 의존성을 추가한다.
 
 
-### 1.3. POJO mapping
+### 1\.3\. POJO mapping
 
 
 
@@ -122,8 +122,8 @@ public class ReplicationDataSourceProperties {
 prefix와 매칭되는 프로퍼티들을 자바 객체로 매핑한다.
 
 
-2. Routing Data Source
-----------------------
+2\. Routing Data Source
+-----------------------
 
 
 ![](https://blog.kakaocdn.net/dn/PrXw0/btsEj8rbpSJ/G1tUptTVafzTccG50zZRe1/img.png)
@@ -134,7 +134,7 @@ prefix와 매칭되는 프로퍼티들을 자바 객체로 매핑한다.
 이 클래스를 상속해서 `determineCurrentLookupKey()`를 구현해야 한다.
 
 
-### 2.1. 구현
+### 2\.1\. 구현
 
 
 
@@ -191,13 +191,13 @@ public class ReplicationRoutingSource extends AbstractRoutingDataSource {
 ```
 
 
-* (1) Data Source들을 targetDataSource에 할당하고 Slave의 Data Source명을 저장한다.
-* (2) `TransactionSynchronizationManager`는 현재 요청에 할당된 쓰레드와 매핑된 트랜잭션을 가져온다. 현재 트랜잭션이 `@Transactional(readOnly=true)`면 Slave, `@Transactional`이면 Master의 Data Source명을 리턴한다.
-* (3) 여러 개의 Slave를 사용할 경우 부하를 분산한다.
+* (1\) Data Source들을 targetDataSource에 할당하고 Slave의 Data Source명을 저장한다.
+* (2\) `TransactionSynchronizationManager`는 현재 요청에 할당된 쓰레드와 매핑된 트랜잭션을 가져온다. 현재 트랜잭션이 `@Transactional(readOnly=true)`면 Slave, `@Transactional`이면 Master의 Data Source명을 리턴한다.
+* (3\) 여러 개의 Slave를 사용할 경우 부하를 분산한다.
 
 
-3. Bean 생성
-----------
+3\. Bean 생성
+-----------
 
 
 
@@ -274,42 +274,42 @@ public class ReplicationDatasourceConfig {
 ```
 
 
-### 3.1. routingDataSource()
+### 3\.1\. routingDataSource()
 
 
 Master와 Slave의 Data Source를 생성하고 구현한 Routing Data Source에 할당한다.
 
 
-### 3.2. lazyRoutingDataSource()
+### 3\.2\. lazyRoutingDataSource()
 
 
 Spring은 트랜잭션 시작 시점에(쿼리를 실행하기 전에) Data Source에서 Connection을 획득한다. 즉, 현재 스레드에 매핑된 트랜잭션을 가져올 수 없어서 `DefaultTargetDataSource`로 할당한 Master의 Connection만 얻게 된다.
 
 
 
-> TransactionManager 식별 -> Data Source에서 Connection 획득 -> 트랜잭션 동기화
+> TransactionManager 식별 \-\> Data Source에서 Connection 획득 \-\> 트랜잭션 동기화
 
 따라서 `LazyConnectionDataSourceProxy` 객체를 사용해서 쿼리를 실행할 때 Connection을 가져올 수 있도록 구현해야 한다.
 
 
 
-> TransactionManager 식별 -> Connection Proxy 객체 획득 -> 트랜잭션 동기화 -> 실제 쿼리 호출 시 getConnection() -> determineCurrentLookupKey() 호출
+> TransactionManager 식별 \-\> Connection Proxy 객체 획득 \-\> 트랜잭션 동기화 \-\> 실제 쿼리 호출 시 getConnection() \-\> determineCurrentLookupKey() 호출
 
-### 3.3. entityManagerFactory()
+### 3\.3\. entityManagerFactory()
 
 
 직접 생성한 Data Source와 JPA 설정을 EntityManagerFactory에 주입한다.  
 packages는 엔티티가 위치한 패키지 경로를 지정한다.
 
 
-### 3.4. transactionManager()
+### 3\.4\. transactionManager()
 
 
 트랜잭션 관리를 도와주는 transactionManager를 등록한다. `PlatformTransactionManager` 인터페이스로 추상화되어 있다.
 
 
-4. Test
--------
+4\. Test
+--------
 
 
 
@@ -350,7 +350,7 @@ public class DataSourceTest {
 
 
 
-### 4.1. 로그 확인
+### 4\.1\. 로그 확인
 
 
 ![](https://blog.kakaocdn.net/dn/NZ23q/btsEhUAkmi2/2WGEkCF1yznPk8DTdm7Vsk/img.png)
@@ -367,10 +367,10 @@ Reference
 ---------
 
 
-<https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.sql.datasource>  
-<https://tecoble.techcourse.co.kr/post/2023-06-28-JDBC-DataSource/>  
-<https://docs.spring.io/spring-boot/docs/current/reference/html/howto.html#howto.data-access>  
-<https://runebook.dev/en/docs/spring_boot/howto?page=11>  
+[https://docs.spring.io/spring\-boot/docs/current/reference/html/data.html\#data.sql.datasource](https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.sql.datasource)  
+[https://tecoble.techcourse.co.kr/post/2023\-06\-28\-JDBC\-DataSource/](https://tecoble.techcourse.co.kr/post/2023-06-28-JDBC-DataSource/)  
+[https://docs.spring.io/spring\-boot/docs/current/reference/html/howto.html\#howto.data\-access](https://docs.spring.io/spring-boot/docs/current/reference/html/howto.html#howto.data-access)  
+[https://runebook.dev/en/docs/spring\_boot/howto?page\=11](https://runebook.dev/en/docs/spring_boot/howto?page=11)  
 <https://lemontia.tistory.com/967>  
-<https://vladmihalcea.com/read-write-read-only-transaction-routing-spring/>
+[https://vladmihalcea.com/read\-write\-read\-only\-transaction\-routing\-spring/](https://vladmihalcea.com/read-write-read-only-transaction-routing-spring/)
 

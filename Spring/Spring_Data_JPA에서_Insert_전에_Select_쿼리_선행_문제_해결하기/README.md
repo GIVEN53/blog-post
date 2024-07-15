@@ -250,13 +250,13 @@ SimpleJpaRepository bean은 JpaRepositoryFactory에서 생성된다.
 
 
 
-#### 1. getTargetRepository()
+#### 1\. getTargetRepository()
 
 
 JPA repository 객체를 생성한다.
 
 
-#### 2. getEntityInformation()
+#### 2\. getEntityInformation()
 
 
 `information.getDomainType()`에서 리턴한 User 클래스를 파라미터로 받는다.  
@@ -268,7 +268,7 @@ JPA repository 객체를 생성한다.
 
 
 
-#### 3. JpaEntityInformationSupport.getEntityInformation()
+#### 3\. JpaEntityInformationSupport.getEntityInformation()
 
 
 ![](https://blog.kakaocdn.net/dn/dm62VN/btsEEXjxe5Z/K9z30VM8EXVMi7bdhDDssK/img.png)
@@ -278,7 +278,7 @@ JPA repository 객체를 생성한다.
 User 클래스는 Persistable의 구현체이기 때문에 **JpaPersistableEntityInformation**을 리턴한다.
 
 
-#### 4. repository 리턴
+#### 4\. repository 리턴
 
 
 JpaPersistableEntityInformation이 주입된 SimpleJpaRepository를 리턴한다. 
@@ -365,6 +365,6 @@ Reference
 ---------
 
 
-<https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#jpa.entity-persistence.saving-entites>  
-<https://junhyunny.github.io/spring-boot/jpa/junit/pre-persist-pre-update/>
+[https://docs.spring.io/spring\-data/jpa/docs/current/reference/html/\#jpa.entity\-persistence.saving\-entites](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#jpa.entity-persistence.saving-entites)  
+[https://junhyunny.github.io/spring\-boot/jpa/junit/pre\-persist\-pre\-update/](https://junhyunny.github.io/spring-boot/jpa/junit/pre-persist-pre-update/)
 

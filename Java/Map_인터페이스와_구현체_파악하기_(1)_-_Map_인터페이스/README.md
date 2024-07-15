@@ -86,7 +86,7 @@ System.out.println(map.containsKey(2)); // false
 #### int size()
 
 
-키-값 매핑 개수를 리턴한다. 개수가 `Integer.MAX_VALUE`보다 크면 `Integer.MAX_VALUE`를 리턴한다.
+키\-값 매핑 개수를 리턴한다. 개수가 `Integer.MAX_VALUE`보다 크면 `Integer.MAX_VALUE`를 리턴한다.
 
 
 
@@ -139,10 +139,10 @@ values.add("hello"); // throw UnsupportedOperationException
 ```
 
 
-#### Set> entrySet()
+#### Set\> entrySet()
 
 
-모든 키-값 entry를 Set에 담아서 리턴한다. Map에 변경사항이 발생하면 Set에도 그대로 반영된다. **remove**를 지원하고 요소를 삭제하면 Map에서 해당 entry도 삭제된다. 반대로 **add**는 지원하지 않는다.
+모든 키\-값 entry를 Set에 담아서 리턴한다. Map에 변경사항이 발생하면 Set에도 그대로 반영된다. **remove**를 지원하고 요소를 삭제하면 Map에서 해당 entry도 삭제된다. 반대로 **add**는 지원하지 않는다.
 
 
 
@@ -202,7 +202,7 @@ System.out.println(map.getOrDefault(2, "world")); // world
 #### boolean remove(Object key, Object value)
 
 
-key-value entry를 제거한다. key에 매핑된 값이 value와 일치하지 않거나 key가 존재하지 않으면 제거하지 않고 false를 리턴한다.
+key\-value entry를 제거한다. key에 매핑된 값이 value와 일치하지 않거나 key가 존재하지 않으면 제거하지 않고 false를 리턴한다.
 
 
 
@@ -334,7 +334,7 @@ System.out.println(map); // {1=hello world!}
 
 
 
-### Non-Thread Safe
+### Non\-Thread Safe
 
 
 ![](https://blog.kakaocdn.net/dn/JdGU7/btsGAfJGVpT/CzcZUDcUvkkBfUQAX3nZ4K/img.png)
